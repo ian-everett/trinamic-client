@@ -122,6 +122,11 @@ do_command(int drive_start, int drive_end, char *cmd, char *cmd2)
         c = strtok(cmd, " ");
         if (c)
             cmd2 = strtok(NULL, " ");
+        else
+        {
+            printf("Incorrect command structure\n");
+            return 1;
+        }
     }
     
     /*
