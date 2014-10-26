@@ -6,10 +6,15 @@
 
 #define DEBUG
 
+enum {
+    STANDARD,
+    FILEMODE
+};
+
 struct _key_code
 {
 	char * str;
-	int code;
+	unsigned char code;
 };
 
 struct _key_code codes[] = {
@@ -30,31 +35,36 @@ struct _key_code codes[] = {
 	{ NULL , 0 }
 };
 
-static int get_range(char *, int *, int *);
+static int get_range(char *, unsigned char *, unsigned char *);
 static int check_code(char *);
 static void usage(void);
-static int get_commands(char *, char *, char *, int*);
+static int get_commands(char *, unsigned char *, unsigned char *, int *);
+static int do_command(int, int, char*, char*);
+static int SendMessage(unsigned char, unsigned char, unsigned char, unsigned char, int);
 
 int main (int argc, char *argv[])
 {
-	char * drives;
-	char * cmd;
-	int command;
-	int drive_start;
-	int drive_end;
-	char type;
-	char motor;
-	int value;
-	
-	if (argc < 5)
-		usage();
+	unsigned char drive_start;
+	unsigned char drive_end;
+    int mode = STANDARD;
+    FILE * fptr;
+    char buffer[32];
+
+    if (strstr(argv[0], "tri-prog-file"))
+    {
+        mode = FILEMODE;
+        if (argc < 4)
+            usage();
+        
+    }
+    else if (argc < 5)
+        usage();
 	
 	/*
 	 * Get range of drives
 	 * 1-6 = scan drives 1 to 6
 	 */
-	drives = argv[1];
-	if ((drives[0] == '-') && (drives[1] == 'd')) 
+	if ((argv[1][0] == '-') && (argv[1][1] == 'd'))
 	{
 		/*
 		 * Get drive range
@@ -63,45 +73,33 @@ int main (int argc, char *argv[])
 		{
 			printf("Connecting to drives %d to %d\n", drive_start, drive_end);
 		
-			cmd = argv[3];
-	
-			/*
-		 	* Check command, if not found see
-		 	* if valid number else fail
-		 	*/
-			command = check_code(cmd);
-			if (command == 0)
-				command = atoi(cmd);
-			if (command > 0)
-			{
-				/*
-			 	* Command OK
-			 	*/
-				printf("Setting command %s (%d) OK\n", cmd, command);
-			}
-			else
-			{
-				printf("%s Command not found\n", cmd);
-				usage();
-			}
-			
-			/*
-			 * Get rest of instruction
-			 */
-			cmd = argv[4];
-			get_commands(cmd, &type, &motor, &value);
-			
-			while (drive_start <= drive_end)
-			{
-				printf("Address = %d\n", drive_start);
-				printf("Command = %d\n", command);
-				printf("Type = %d\n", type);
-				printf("Motor = %d\n", motor);
-				printf("Value = %d\n", value);
-				printf("\n");
-				
-				drive_start++;
-			}
+            if (mode == FILEMODE)
+            {
+                fptr = fopen(argv[3], "r");
+                if (fptr)
+                {
+                    printf("***** Running commands in %s file *****\n", argv[3]);
+                    while(fgets(&buffer[0], 32, fptr))
+                    {
+                        /*
+                         * Read command line commands and execute
+                         */
+                        do_command(drive_start, drive_end, buffer, NULL);
+                    }
+                    fclose(fptr);
+                }
+                else
+                {
+                    printf("Could not open file %s\n", argv[3]);
+                }
+            }
+            else
+            {
+                /*
+                 * Read comman line commands and execute
+                 */
+                do_command(drive_start, drive_end, argv[3], argv[4]);
+            }
 		}
 	}
 	
@@ -110,11 +108,81 @@ int main (int argc, char *argv[])
 
 
 static int
-get_commands(char * str, char * type, char * motor, int * value)
+do_command(int drive_start, int drive_end, char *cmd, char *cmd2)
+{
+    unsigned char command;
+    unsigned char type;
+    unsigned char motor;
+    int value;
+    char *c;
+    int res;
+    
+    if (cmd2 == NULL)
+    {
+        c = strtok(cmd, " ");
+        if (c)
+            cmd2 = strtok(NULL, " ");
+    }
+    
+    /*
+     * Check command, if not found see
+     * if valid number else fail
+     */
+    command = check_code(cmd);
+    if (command == 0)
+        command = atoi(cmd);
+    if (command > 0)
+    {
+        /*
+         * Command OK
+         */
+        printf("Trying command %s (%d) %s", cmd, command, cmd2);
+    }
+    else
+    {
+        printf("%s command not found\n", cmd);
+    }
+    
+    /*
+     * Get rest of instruction
+     */
+    get_commands(cmd2, &type, &motor, &value);
+    
+    while (drive_start <= drive_end)
+    {
+        printf("Drive %d:", drive_start);
+        /*
+         * Send command and wait reply
+         */
+        res = SendMessage(drive_start, command, type, motor, value);
+        switch(res)
+        {
+            case 100:
+                printf(" Answered with OK\n");
+                break;
+                
+                
+            default:
+                printf(" Answered with Error of %d\n", res);
+                break;
+        }
+
+        
+
+        
+        drive_start++;
+    }
+    
+    return 0;
+}
+
+
+static int
+get_commands(char * str, unsigned char * type, unsigned char * motor, int * value)
 {
 	char *c;
 
-	*motor = *type = *value = 0;	
+	*motor = *type = *value = 0;
     c = strchr(str, ',');
 	if (c)
 	{
@@ -128,7 +196,7 @@ get_commands(char * str, char * type, char * motor, int * value)
 		*c++ = '\0';
 		*motor = atoi(str);
 		str = c;
-	}	
+	}
 	*value = atoi(str);
 
 	return 0;
@@ -136,7 +204,7 @@ get_commands(char * str, char * type, char * motor, int * value)
 
 
 static int
-get_range(char * str, int * first, int * last)
+get_range(char * str, unsigned char * first, unsigned char * last)
 {
 	int res,retval,swap;
 	char * c;
@@ -198,6 +266,26 @@ check_code(char * str)
 	
 	return 0;
 }
+
+
+static int
+SendMessage(unsigned char drive, unsigned char command, unsigned char type, unsigned char motor, int value)
+{
+    
+#ifdef DEBUG
+    printf("\n");
+    printf("Address = %d\n", drive);
+    printf("Command = %d\n", command);
+    printf("Type = %d\n", type);
+    printf("Bank = %d\n", motor);
+    printf("Value = %d\n", value);
+    printf("\n");
+#endif
+    
+    
+    return 100;
+}
+
 
 static
 void usage(void)
