@@ -1,0 +1,6 @@
+# Set homed closed position encoder counts
+SGP 54,2,0
+STGP 54,2,0 
+# Set homed open position encoder counts
+SGP 55,2,0
+STGP 55,2,0 

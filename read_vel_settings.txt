@@ -1,0 +1,8 @@
+# 140 Microstep res
+GAP 140,0,0
+
+# 153 Ramp Divisor
+GAP 153,0,0
+
+# 154 Pulse Divisor
+GAP 154,0,0

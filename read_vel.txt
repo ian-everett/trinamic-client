@@ -1,0 +1,8 @@
+# Next target speed
+GAP 2,0,0
+
+# Read Actual speed
+GAP 4,0,0
+
+# Max acc
+GAP 5,0,0

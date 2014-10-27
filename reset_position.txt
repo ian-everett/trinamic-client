@@ -1,0 +1,5 @@
+# Read position
+SAP 1,0,0
+
+# Read encoder
+SAP 209,0,0

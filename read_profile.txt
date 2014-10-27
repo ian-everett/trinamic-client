@@ -1,0 +1,14 @@
+# Position 1 counts
+GGP 56,2,0
+# Position 2 counts
+GGP 57,2,0
+# Position 3 counts
+GGP 58,2,0
+# Velocity 1 counts
+GGP 59,2,0
+# Velocity 2 counts
+GGP 60,2,0
+# Velocity 3 counts
+GGP 61,2,0
+# Velocity 4 counts
+GGP 62,2,0

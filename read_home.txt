@@ -1,0 +1,4 @@
+# Read homed closed position encoder counts
+GGP 54,2,0
+# Read homed open position encoder counts
+GGP 55,2,0
