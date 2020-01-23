@@ -1,0 +1,12 @@
+# Read target position
+GAP 0,0,0
+
+# Read position
+GAP 1,0,0
+
+
+# Read encoder
+GAP 209,0,0
+
+# Read encoder
+GAP 215,0,0

@@ -1,0 +1,3 @@
+# Set current to a decent amount 10%
+SAP 6,0,25
+

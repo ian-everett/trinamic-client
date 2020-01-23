@@ -141,8 +141,9 @@ connect_drive(void)
 		 * Setup Comms
 		 */
 		tcgetattr(fd, &ttydata);
-		//cfsetospeed(&ttydata, B38400);
-		cfsetospeed(&ttydata, B9600);
+		//cfsetospeed(&ttydata, B115200);
+		//cfsetospeed(&ttydata, B9600);
+		cfsetospeed(&ttydata, B38400);
 		cfsetispeed(&ttydata, 0);
 		cfmakeraw(&ttydata);
 		tcflush(fd, TCIOFLUSH);

@@ -1,0 +1,2 @@
+# Allow drives to move 
+SGP 65,2,7

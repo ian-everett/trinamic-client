@@ -1,0 +1,5 @@
+# Read extended error
+GAP 207,0,0
+
+# Read driver error flags
+GAP 208,0,0
